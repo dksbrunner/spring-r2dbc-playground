@@ -38,24 +38,24 @@ public class ContractPersistence {
 
     public Flux<Contract> findAllByCustomerId(ContractRelations relations, long customerId) {
         return contractRepository.findAllByCustomerId(customerId)
-                .flatMap(contractEntity -> loadCustomerWithRelations(relations, contractEntity));
+                .flatMap(contractEntity -> loadContractWithRelations(relations, contractEntity));
     }
 
-    private Mono<Contract> loadCustomerWithRelations(ContractRelations relations, ContractEntity contractEntity) {
+    private Mono<Contract> loadContractWithRelations(ContractRelations relations, ContractEntity contractEntity) {
         return Mono.just(contractEntity)
                 .map(this::mapToBusiness)
-                .flatMap(contract -> loadCustomerIfNecessary(contract, relations, contractEntity.getCustomerId()))
-                .flatMap(contract -> loadProductIfNecessary(contract, relations, contractEntity.getProductId()));
+                .flatMap(contract -> loadCustomerIfNecessary(relations, contract, contractEntity.getCustomerId()))
+                .flatMap(contract -> loadProductIfNecessary(relations, contract, contractEntity.getProductId()));
     }
 
-    public Mono<Contract> loadCustomerIfNecessary(Contract contract, ContractRelations relations, long customerId) {
-        return relations.getCustomer().ifEager(() -> customerPersistence.findById(customerId))
+    private Mono<Contract> loadCustomerIfNecessary(ContractRelations relations, Contract contract, long customerId) {
+        return customerPersistence.loadCustomerByStrategy(relations, customerId)
                 .map(customer -> (Contract) ImmutableContract.copyOf(contract).withCustomer(customer))
                 .defaultIfEmpty(contract);
     }
 
-    public Mono<Contract> loadProductIfNecessary(Contract contract, ContractRelations relations, long productId) {
-        return relations.getProduct().ifEager(() -> productPersistence.findById(productId))
+    private Mono<Contract> loadProductIfNecessary(ContractRelations relations, Contract contract, long productId) {
+        return productPersistence.loadProductByStrategy(relations, productId)
                 .map(product -> (Contract) ImmutableContract.copyOf(contract).withProduct(product))
                 .defaultIfEmpty(contract);
     }

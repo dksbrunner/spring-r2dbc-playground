@@ -23,7 +23,7 @@ import lombok.Value;
  */
 @Value
 @Builder
-public class ContractRelations {
+public class ContractRelations implements WithCustomerRelation, WithProductRelation {
 
     @Builder.Default
     LoadingType customer = LoadingType.EAGER;

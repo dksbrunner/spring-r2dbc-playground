@@ -32,9 +32,11 @@ public class ProductPersistence {
 
     private final ProductRepository repository;
 
-    public Mono<Product> findById(Long id) {
-        return repository.findById(id)
-                .map(this::mapToBusiness);
+    public Mono<Product> loadProductByStrategy(WithProductRelation relation, long productId) {
+        return switch (relation.getProduct()) {
+            case EAGER -> repository.findById(productId).map(this::mapToBusiness);
+            case NONE -> Mono.empty();
+        };
     }
 
     private Product mapToBusiness(ProductEntity productEntity) {

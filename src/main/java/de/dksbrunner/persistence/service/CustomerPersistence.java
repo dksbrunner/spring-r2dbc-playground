@@ -32,9 +32,11 @@ public class CustomerPersistence {
 
     private final CustomerRepository repository;
 
-    public Mono<Customer> findById(Long id) {
-        return repository.findById(id)
-                .map(this::mapToBusiness);
+    public Mono<Customer> loadCustomerByStrategy(WithCustomerRelation relation, long customerId) {
+        return switch (relation.getCustomer()) {
+            case EAGER -> repository.findById(customerId).map(this::mapToBusiness);
+            case NONE -> Mono.empty();
+        };
     }
 
     private Customer mapToBusiness(CustomerEntity customerEntity) {

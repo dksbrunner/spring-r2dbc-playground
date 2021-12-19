@@ -18,6 +18,7 @@ package de.dksbrunner.persistence.service;
 /**
  * @author Daniel Brunner
  */
-public enum LoadingType {
-    EAGER, NONE
+public interface WithProductRelation {
+
+    LoadingType getProduct();
 }
