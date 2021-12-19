@@ -15,21 +15,18 @@
  */
 package de.dksbrunner;
 
-import de.dksbrunner.business.Contract;
 import de.dksbrunner.persistence.model.ContractEntity;
 import de.dksbrunner.persistence.model.CustomerEntity;
 import de.dksbrunner.persistence.model.ProductEntity;
-import de.dksbrunner.persistence.service.ContractPersistence;
-import de.dksbrunner.persistence.service.ContractRelations;
-import de.dksbrunner.persistence.service.LoadingType;
+import de.dksbrunner.persistence.repository.CustomerRepository;
+import de.dksbrunner.persistence.repository.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.r2dbc.core.R2dbcEntityOperations;
-
-import java.util.List;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Daniel Brunner
@@ -39,10 +36,13 @@ import java.util.List;
 public class Application implements CommandLineRunner {
 
     @Autowired
-    private R2dbcEntityOperations entityOperations;
+    private CustomerRepository customerRepository;
 
     @Autowired
-    private ContractPersistence contractPersistence;
+    private ProductRepository productRepository;
+
+    @Autowired
+    private R2dbcEntityOperations entityOperations;
 
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
@@ -50,40 +50,35 @@ public class Application implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        ContractEntity contractEntity = createContract(
-                "40030-1000", createCustomer("John Doe"), createProduct("Boomercringe"));
-
-        ContractRelations relations_0 = ContractRelations.builder()
-                .customer(LoadingType.NONE)
-                .product(LoadingType.NONE)
-                .build();
-        loadContractsByCustomerId(relations_0, contractEntity.getCustomerId());
-
-        ContractRelations relations_1 = ContractRelations.builder()
-                .customer(LoadingType.EAGER)
-                .product(LoadingType.NONE)
-                .build();
-        loadContractsByCustomerId(relations_1, contractEntity.getCustomerId());
-
-        ContractRelations relations_2 = ContractRelations.builder()
-                .customer(LoadingType.EAGER)
-                .product(LoadingType.EAGER)
-                .build();
-        loadContractsByCustomerId(relations_2, contractEntity.getCustomerId());
+        createContract("40030-1000", getOrCreateCustomer("John Doe"), getOrCreateProduct("Boomercringe"));
+        createContract("40030-2000", getOrCreateCustomer("John Doe"), getOrCreateProduct("Boomercringe"));
+        createContract("40080-1000", getOrCreateCustomer("Jane Doe"), getOrCreateProduct("Boomercringe"));
     }
 
-    private ProductEntity createProduct(String name) {
+    private ProductEntity getOrCreateProduct(String name) {
+        return productRepository.findByName(name)
+                .switchIfEmpty(createProduct(name))
+                .block();
+    }
+
+    private Mono<ProductEntity> createProduct(String name) {
         ProductEntity productEntity = ProductEntity.builder()
                 .name(name)
                 .build();
-        return entityOperations.insert(productEntity).block();
+        return productRepository.save(productEntity);
     }
 
-    private CustomerEntity createCustomer(String name) {
+    private CustomerEntity getOrCreateCustomer(String name) {
+        return customerRepository.findByName(name)
+                .switchIfEmpty(createCustomer(name))
+                .block();
+    }
+
+    private Mono<CustomerEntity> createCustomer(String name) {
         CustomerEntity customerEntity = CustomerEntity.builder()
                 .name(name)
                 .build();
-        return entityOperations.insert(customerEntity).block();
+        return customerRepository.save(customerEntity);
     }
 
     private ContractEntity createContract(String reference, CustomerEntity customerEntity, ProductEntity productEntity) {
@@ -93,12 +88,5 @@ public class Application implements CommandLineRunner {
                 .productId(productEntity.getId())
                 .build();
         return entityOperations.insert(contractEntity).block();
-    }
-
-    private void loadContractsByCustomerId(ContractRelations relations, long customerId) {
-        List<Contract> contracts = contractPersistence.findAllByCustomerId(relations, customerId)
-                .collectList()
-                .block();
-        log.info("Contracts: {}", contracts);
     }
 }

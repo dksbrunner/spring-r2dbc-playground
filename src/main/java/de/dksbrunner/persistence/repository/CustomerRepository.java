@@ -18,10 +18,13 @@ package de.dksbrunner.persistence.repository;
 import de.dksbrunner.persistence.model.CustomerEntity;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Daniel Brunner
  */
 @Repository
 public interface CustomerRepository extends ReactiveCrudRepository<CustomerEntity, Long> {
+
+    Mono<CustomerEntity> findByName(String name);
 }
