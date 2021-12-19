@@ -17,6 +17,8 @@ package de.dksbrunner.business;
 
 import org.immutables.value.Value;
 
+import java.util.List;
+
 /**
  * @author Daniel Brunner
  */
@@ -24,4 +26,6 @@ import org.immutables.value.Value;
 public interface Customer {
 
     String getName();
+
+    List<Contract> getContracts();
 }

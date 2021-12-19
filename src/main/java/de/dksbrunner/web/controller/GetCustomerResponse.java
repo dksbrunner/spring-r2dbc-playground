@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.dksbrunner.business;
+package de.dksbrunner.web.controller;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
-
-import java.util.Optional;
 
 /**
  * @author Daniel Brunner
  */
 @Value.Immutable
-public interface Contract {
+@JsonSerialize(as = ImmutableGetCustomerResponse.class)
+public interface GetCustomerResponse {
 
-    String getReference();
-
-    Optional<Product> getProduct();
+    @JsonValue
+    CustomerDto getPayload();
 }

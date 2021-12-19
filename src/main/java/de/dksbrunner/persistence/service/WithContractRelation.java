@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.dksbrunner.business;
-
-import org.immutables.value.Value;
-
-import java.util.Optional;
+package de.dksbrunner.persistence.service;
 
 /**
  * @author Daniel Brunner
  */
-@Value.Immutable
-public interface Contract {
+public interface WithContractRelation {
 
-    String getReference();
-
-    Optional<Product> getProduct();
+    LoadingType getContract();
 }

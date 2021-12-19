@@ -15,12 +15,14 @@
  */
 package de.dksbrunner.persistence.service;
 
+import de.dksbrunner.business.Contract;
 import de.dksbrunner.business.Customer;
 import de.dksbrunner.business.ImmutableCustomer;
 import de.dksbrunner.persistence.model.CustomerEntity;
 import de.dksbrunner.persistence.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,10 +34,29 @@ public class CustomerPersistence {
 
     private final CustomerRepository repository;
 
-    public Mono<Customer> loadCustomerByStrategy(WithCustomerRelation relation, long customerId) {
-        return switch (relation.getCustomer()) {
-            case EAGER -> repository.findById(customerId).map(this::mapToBusiness);
-            case NONE -> Mono.empty();
+    private final ContractPersistence contractPersistence;
+
+    public Mono<Customer> findByName(CustomerRelations relations, long customerId) {
+        return repository.findById(customerId)
+                .flatMap(customerEntity -> loadCustomerWithRelations(relations, customerEntity));
+    }
+
+    private Mono<Customer> loadCustomerWithRelations(CustomerRelations relations, CustomerEntity customerEntity) {
+        return Mono.just(customerEntity)
+                .map(this::mapToBusiness)
+                .flatMap(customer -> loadContractsIfNecessary(relations, customer, customerEntity.getId()));
+    }
+
+    private Mono<Customer> loadContractsIfNecessary(CustomerRelations relations, Customer customer, long customerId) {
+        return loadContractsByStrategy(relations, customerId).collectList()
+                .map(contracts -> (Customer) ImmutableCustomer.copyOf(customer).withContracts(contracts))
+                .defaultIfEmpty(customer);
+    }
+
+    private Flux<Contract> loadContractsByStrategy(WithContractRelation relation, long customerId) {
+        return switch (relation.getContract()) {
+            case EAGER -> contractPersistence.findAllByCustomerId(ContractRelations.builder().build(), customerId);
+            case NONE -> Flux.empty();
         };
     }
 

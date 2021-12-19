@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.dksbrunner.business;
+package de.dksbrunner.persistence.service;
 
-import org.immutables.value.Value;
-
-import java.util.Optional;
+import lombok.Builder;
+import lombok.Value;
 
 /**
  * @author Daniel Brunner
  */
-@Value.Immutable
-public interface Contract {
+@Value
+@Builder
+public class CustomerRelations implements WithContractRelation {
 
-    String getReference();
-
-    Optional<Product> getProduct();
+    @Builder.Default
+    LoadingType contract = LoadingType.EAGER;
 }

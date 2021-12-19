@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.dksbrunner.persistence.service;
+package de.dksbrunner.web.controller;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.immutables.value.Value;
+
+import java.util.List;
 
 /**
  * @author Daniel Brunner
  */
-public interface WithCustomerRelation {
+@Value.Immutable
+@JsonSerialize(as = ImmutableCustomerDto.class)
+public interface CustomerDto {
 
-    LoadingType getCustomer();
+    String getName();
+
+    List<ContractDto> getContracts();
 }

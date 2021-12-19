@@ -33,25 +33,17 @@ public class ContractPersistence {
 
     private final ContractRepository contractRepository;
 
-    private final CustomerPersistence customerPersistence;
     private final ProductPersistence productPersistence;
 
     public Flux<Contract> findAllByCustomerId(ContractRelations relations, long customerId) {
         return contractRepository.findAllByCustomerId(customerId)
-                .flatMap(contractEntity -> loadContractWithRelations(relations, contractEntity));
+                .flatMap(contractEntity -> loadContractsWithRelations(relations, contractEntity));
     }
 
-    private Mono<Contract> loadContractWithRelations(ContractRelations relations, ContractEntity contractEntity) {
+    private Mono<Contract> loadContractsWithRelations(ContractRelations relations, ContractEntity contractEntity) {
         return Mono.just(contractEntity)
                 .map(this::mapToBusiness)
-                .flatMap(contract -> loadCustomerIfNecessary(relations, contract, contractEntity.getCustomerId()))
                 .flatMap(contract -> loadProductIfNecessary(relations, contract, contractEntity.getProductId()));
-    }
-
-    private Mono<Contract> loadCustomerIfNecessary(ContractRelations relations, Contract contract, long customerId) {
-        return customerPersistence.loadCustomerByStrategy(relations, customerId)
-                .map(customer -> (Contract) ImmutableContract.copyOf(contract).withCustomer(customer))
-                .defaultIfEmpty(contract);
     }
 
     private Mono<Contract> loadProductIfNecessary(ContractRelations relations, Contract contract, long productId) {
