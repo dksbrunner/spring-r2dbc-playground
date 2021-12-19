@@ -17,20 +17,10 @@ package de.dksbrunner.persistence.model;
 
 import org.springframework.data.domain.Persistable;
 
-import java.util.NoSuchElementException;
-
 /**
  * @author Daniel Brunner
  */
 public interface Entity extends Persistable<Long> {
-
-    default Long getIdOrElseThrow() {
-        Long id = getId();
-        if (id == null) {
-            throw new NoSuchElementException();
-        }
-        return id;
-    }
 
     @Override
     default boolean isNew() {
