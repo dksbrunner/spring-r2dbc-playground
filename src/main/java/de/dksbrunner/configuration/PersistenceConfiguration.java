@@ -15,13 +15,37 @@
  */
 package de.dksbrunner.configuration;
 
+import io.r2dbc.spi.ConnectionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
+import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer;
+import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator;
 
 /**
  * @author Daniel Brunner
  */
 @Configuration
-@EnableR2dbcRepositories(basePackages = "de.paspatu.persistence.repository")
-public class PersistenceConfiguration {
+@EnableR2dbcRepositories(basePackages = "de.dksbrunner.persistence.repository")
+public class PersistenceConfiguration extends AbstractR2dbcConfiguration {
+
+    @Autowired
+    private ConnectionFactory connectionFactory;
+
+    @Override
+    public ConnectionFactory connectionFactory() {
+        return connectionFactory;
+    }
+
+    @Bean
+    public ConnectionFactoryInitializer initializer(ConnectionFactory connectionFactory) {
+        ConnectionFactoryInitializer initializer = new ConnectionFactoryInitializer();
+        initializer.setConnectionFactory(connectionFactory);
+        initializer.setDatabasePopulator(new ResourceDatabasePopulator(
+                new ClassPathResource("schema.sql")));
+        return initializer;
+    }
 }
